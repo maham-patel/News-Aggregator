@@ -8,21 +8,10 @@ class ArticleSerializer(serializers.ModelSerializer):
         model = Article
         fields = ('id', 'headline', 'link', 'source')
 
-class QuerySerializer(serializers.ModelSerializer):
-    articles = ArticleSerializer(source = 'articles', many=True)
-    class Meta:
-        model = Query
-        fields = ('articles')
-
 class SavedSerializer(serializers.ModelSerializer):
-    articles = ArticleSerializer(source = 'savedarticles', many=True)
+    user = serializers.RelatedField(source='user.user', read_only=True)
+    article = ArticleSerializer(source='article', read_only=True)
+    favourite = serializers.BooleanField(source='favourite')
     class Meta:
         model = Saved
-        fields = ('article', 'favourite')
-
-class UserSerializer(serializers.ModelSerializer):
-    articles = SavedSerializer(source = 'saved', many=True)
-    
-    class Meta:
-        model = User
-        fields = ('articles')
+        fields = ('user', 'favourite', 'id', 'headline', 'link', 'source')

@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from django.http import JsonResponse
 
 from .models import Article, User, Saved, Query
-from .serializers import ArticleSerializer
+from .serializers import ArticleSerializer, SavedSerializer
 from news import serializers
 
 def home(request, format = None):
@@ -72,7 +72,7 @@ def favourite(request, format = None):
     username = request.GET.get('user') or ''
     id = request.GET.get('pk') or ''
     #if no params are present, return error
-    if username == '' or id == '':
+    if username == '' and id == '':
         return JsonResponse("Please enter a valid url", safe = False)
     #if only username is present, return all favourites for the user
     elif username != "":
@@ -82,11 +82,23 @@ def favourite(request, format = None):
             #if the user does not exist, create the user
             user_obj = User.objects.create(user = username)
         #get the favourites for the user
-        
-        
-        string =  username + "'s "  + 'list of favourited news will be listed here'
-        return JsonResponse(string, safe = False)
+        Article_list = Saved.objects.filter(user = user_obj, favourite = True)
+        #serialize the favourites and return the response
+        serializer = ArticleSerializer(Article_list, many = True)
+        return Response(serializer.data)
     #if both username and id are present, then we will favourite/unfavourite the article
     else:
-        string = username + "'s #" + str(id) + ' news has been favourited/unfavourited'
-        return JsonResponse(string, safe = False)
+        try: #check if the user exists
+            user_obj = User.objects.get(user = username)
+        except: 
+            #if the user does not exist, create the user
+            user_obj = User.objects.create(user = username)
+        #get the article object
+        article_obj = Article.objects.get(id = id)
+        #if the article is already favourited, then unfavourite it and vice versa
+        saved_obj = Saved.objects.filter(user = user_obj, article = article_obj)
+        saved_obj.update(favourite = not saved_obj[0].favourite)
+        #serialize the saved object and return the response
+        serializer = SavedSerializer(saved_obj, many = False)
+        return Response(serializer.data)
+            
