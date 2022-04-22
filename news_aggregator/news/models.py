@@ -1,3 +1,4 @@
+import re
 from django.db import models
 
 # Create your models here.
@@ -16,7 +17,8 @@ class Article(models.Model):
     link = models.TextField()
     source = models.CharField(max_length=50)
     id = models.AutoField(primary_key=True)
-    query = models.ForeignKey(Query, on_delete=models.CASCADE)
+    #Article has a many to one relationship with Query
+    query = models.ForeignKey(Query, on_delete=models.CASCADE, related_name='articles')
     
     class Meta:
         verbose_name_plural = "Articles"
@@ -26,6 +28,7 @@ class Article(models.Model):
     
 class User(models.Model):
     user = models.CharField(max_length=200, primary_key=True)
+    #User has a many to many relationship with Article through intermiate table Saved
     articles = models.ManyToManyField(Article, through='Saved')
     
     class Meta:
@@ -36,7 +39,7 @@ class User(models.Model):
     
 class Saved(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='savedarticles')
     favourite = models.BooleanField(default=False)
     date_of_fav = models.DateTimeField(auto_now_add=True)
     
